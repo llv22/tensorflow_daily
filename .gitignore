@@ -109,3 +109,7 @@ venv.bak/
 # local cache folder
 MNIST/
 output/
+*.index
+*.data*
+*.png
+checkpoint
