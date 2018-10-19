@@ -1,6 +1,7 @@
 # SSGAN
 
 * Concept: Using generator's capacity of generating sample to improve performance of image classification, furthermore, to enhance generalization capacity of discriminator.
+  Paper: [Improved Techniques for Training GANs](https://arxiv.org/pdf/1606.03498.pdf)
 * Discriminator/Classification Network
   1. use image as input, classify real image into the first N classes, generated image into the last N+1 class.
   2. loss includes:  
