@@ -105,3 +105,11 @@ venv.bak/
 
 # mac cache
 .DS_Store
+
+# local cache folder
+MNIST/
+output/
+*.index
+*.data*
+*.png
+checkpoint
