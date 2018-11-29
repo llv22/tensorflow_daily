@@ -29,6 +29,7 @@
 # Reference:
 # * [SMO优化算法（Sequential minimal optimization)](http://www.cnblogs.com/jerrylead/archive/2011/03/18/1988419.html)
 # * [SVM原理以及Tensorflow 实现SVM分类(附代码)](https://www.cnblogs.com/vipyoumay/p/7560061.html)
+# * [知乎实现SVM的SMO](https://zhuanlan.zhihu.com/p/29212107)
 # * [Latex Symbols](https://artofproblemsolving.com/wiki/index.php/LaTeX:Symbols)
 
 # ## 1. Theory
@@ -177,7 +178,7 @@
 # * solve b value as follow:
 # $$ b = \frac{1}{|S|} \sum_{s \in S} (y_s - \sum_{i \in S} \alpha_i y_i X_i^T X_s) $$
 
-# ## 2. Practise via tensorflow
+# ## 2. Practise
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -199,6 +200,7 @@ for train_index, test_index in kf.split(x_vals, y_vals):
     X_train, y_train, X_test, y_test = x_vals[train_index], y_vals[train_index], x_vals[test_index], y_vals[test_index]
 # -
 
+# ### 2.1 GD Tensorflow
 # ### Use W, b to estimate SVM boundary
 
 assert len(x_vals.shape) == 2 and len(y_vals.shape) == 1
@@ -265,3 +267,87 @@ plt.legend(loc='lower right')
 plt.title('Sepal Length vs Pedal Width')
 plt.xlabel('Pedal Width')
 plt.ylabel('Sepal Length')
+# -
+
+# ### 2.2 SMO Tensorflow
+
+# #### SMO update equation from [Platt  1988 MSRA]
+#
+# Details reasoning refer to [知乎SVM](https://zhuanlan.zhihu.com/p/29212107) and [Platt's SMO in appendix](https://www.microsoft.com/en-us/research/publication/sequential-minimal-optimization-a-fast-algorithm-for-training-support-vector-machines/)
+#
+# 1. L, H values
+# $$
+# \begin{cases}
+# L = max(0, \alpha_2-\alpha_1), H=min(C, C+\alpha_2-\alpha_1) \text{   ,when   }y_2 y_1 = -1 \\
+# L = max(0, \alpha_2+\alpha_1-C), H=min(C, \alpha_2+\alpha_1) \text{   ,when   }y_2 y_1 = 1
+# \end{cases}
+# $$
+#
+# 2. Partial devative utility $\eta$  
+# $$
+# \eta = \kappa (x_1, x_1) + \kappa (x_2, x_2) - 2 \kappa (x_1, x_2)
+# $$
+# When $\kappa$ is linear, we have
+# $$
+# \kappa (x_1, x_2) = x_1^T \cdot x_2
+# $$
+#
+# 3. Quaradtic solution $\alpha_2^{new}$
+# $$
+# \alpha_2^{new} = \alpha_2 + \frac{y_2 (E_1 - E_2)}{\eta}
+# $$
+# Where $E_i$ is defined as:
+# $$
+# E_i = \nu_i - y_i, \nu_i = W \cdot X_i - b - y_i
+# $$
+#
+# 4. Solution clip
+# $$
+# \alpha_2^{new, clipped} = 
+# \begin{cases}
+# H, \text{  if  } \alpha_2^{new} \geq H \\
+# \alpha_2^{new}, \text{  if  } L \leq \alpha_2^{new} \leq H \\
+# L, \text{  if  } \alpha_2^{new} \leq H 
+# \end{cases}
+# $$
+#
+# 5. $\alpha_1^{new}$ update
+# $$
+# s = y_1 y_2
+# $$
+# $$
+# \alpha_1^{new} = \alpha_1 + s(\alpha_2 - \alpha_2^{new, clipped})
+# $$
+#
+# 6. Update parameters
+# $$
+# f_1 = y_1(E_1 + b) - \alpha_1 \kappa(x_1, x_1) - s \alpha_2 \kappa(x_1, x_2) \\
+# f_2 = y_2(E_2 + b) - s \alpha_1 \kappa(x_1, x_2) - \alpha_2 \kappa(x_2, x_2) \\
+# L_1 = \alpha_1 + s(\alpha_2 - L) \\
+# H_1 = \alpha_1 + s(\alpha_2 - H) \\
+# \Psi_L = L_1 f_1 + \frac{1}{2} L_1^2 \kappa(x_1, x_1) + \frac{1}{2}L^2 \kappa(x_2, x_2) + sL L_1 \kappa(x_1, x_2) \\
+# \Psi_H = H_1 f_1 + \frac{1}{2} H_1^2 \kappa(x_1, x_1) + \frac{1}{2}H^2 \kappa(x_2, x_2) + sH H_1 \kappa(x_1, x_2)
+# $$
+#
+# 7. Heuristics for choosing which multipliers to optimize
+#
+# 8. Compute the threshold
+#     * $b_1$ is valid when new $\alpha_1$ isn't at the bounds
+#     $$
+#     b_1 = E_1 + y_1(\alpha_1^{new} - \alpha_1) \kappa(x_1, x_!) + y_2 (\alpha_2^{new, clipped} - \alpha_2) \kappa(x_1, x_2) + b
+#     $$
+#     * $b_2$ is valid when new $\alpha_2$ isn't at the bounds
+#     $$
+#     b_2 = E_2 + y_1(\alpha_1^{new} - \alpha_1) \kappa(x_1, x_2) + y_2 (\alpha_2^{new, clipped} - \alpha_2) \kappa(x_2, x_2) + b
+#     $$
+#     * both $b_1$ and $b_2$ are valid, they are equal; so using b from $b_1$ and $b_2$ 
+#     $$
+#     b = (b_1 + b_2) / 2
+#     $$
+#
+# 9. Optimization for Linear SVMs
+# $$
+# W^{new} = W + y_1 (\alpha_1^{new} - \alpha_1) x_1 + y_2 (\alpha_2^{new, clipped} - \alpha_2) x_2
+# $$
+
+
