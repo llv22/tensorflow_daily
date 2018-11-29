@@ -81,13 +81,16 @@
 # make $ \alpha_1 y^{(1)} + \alpha_2 y^{(2)} = \zeta $, We analyze ($\alpha_1, \alpha_2$) as the following 2 cases:
 #
 # **Case 1**: $ y^{(1)} \cdot y^{(2)} = -1 $, we have
-#     <img src="svm_bound.png" width="55%"/>
+#     <img src="svm_bound.png" width="45%"/>
 #
 # $ L = \max(0, \alpha_2 - \alpha_1), H = \min(C, C + \alpha_2 - \alpha_1) $
 #
 # **Case 2**: $ y^{(1)} \cdot y^{(2)} = +1 $, we have
 #
 # $ L = \max(0, \alpha_2 + \alpha_1 - C), H = \min(C, \alpha_2 + \alpha_1) $
+#
+# Also summarize for **Case 1** and **Case 2**, $k$ is the same as $\zeta$
+#     <img src="https://pic3.zhimg.com/80/v2-449670775bab3c385b5e5930fc6d2caa_hd.png" width="55%"/>
 #
 # Then we use $\alpha_2$ to represent $\alpha_1$:
 #
@@ -222,7 +225,7 @@ output = tf.matmul(X_data, W) - b
 l2_norm = mean_squared_error(output, y_target)
 # -
 
-# $$ Loss = \max(0, 1 - \hat{y(i)} * y(i)) + \alpha  ||X \cdot W - b||^2 $$
+# $$ Loss = \max(0, 1 - \hat{y(i)} \cdot y(i)) + \alpha  ||X \cdot W - b||^2 $$
 
 loss = tf.reduce_mean(tf.maximum(0., 1. - output * y_target)) + 0.01 * l2_norm
 optimizer = AdamOptimizer(0.01).minimize(loss)
@@ -269,7 +272,7 @@ plt.xlabel('Pedal Width')
 plt.ylabel('Sepal Length')
 # -
 
-# ### 2.2 SMO Tensorflow
+# ## 2.2 SMO Tensorflow
 
 # #### SMO update equation from [Platt  1988 MSRA]
 #
@@ -351,3 +354,89 @@ plt.ylabel('Sepal Length')
 # $$
 
 
+# +
+import tensorflow as tf
+import numpy as np
+
+class TFSVM():
+    """
+    Using tensorflow to implement SMO-SVM
+    1. Paper: refer to https://www.microsoft.com/en-us/research/publication/sequential-minimal-optimization-a-fast-algorithm-for-training-support-vector-machines/.
+    2. Implementation via tensroflow: refer to https://blog.csdn.net/lilongsy/article/details/79391698.
+    """
+    def __init__(self, max_iter=10000, kernel_type='linear', C=1.0, epsilon=1e-3):
+        """[initializer for tensorflow SVM]
+        
+        Keyword Arguments:
+            max_iter {int} -- [max iteration number] (default: {10000})
+            kernel_type {str} -- [kernel type] (default: {'linear'})
+            C {float} -- [penality term] (default: {1.0})
+            epsilon {float} -- [KKT boundary parameter to check if convergence] (default: {1e-3})
+        """
+        self._kernels = {
+            "linear": self.kernel_linear
+        }
+        assert kernel_type in self._kernels
+        self._max_iter = max_iter
+        self._kernel_type = kernel_type
+        self._C = C
+        self._epsilon = epsilon
+        self._model_available = False
+
+    def fit(self, X_train: np.array, y_train: np.array):
+        """[training process for (X_train, y_train)], different from you seeing online. I'd like to use tensorflow for SMO update process, as it's actually analytical solution.
+        
+        Arguments:
+            X_train {np.array} -- [X input data]
+            y_train {np.array} -- [y output data, only +1/-1 for classification]
+        """
+        raise NotImplementedError
+        assert X_train.shape[0] == y_train.shape[0]
+        # start training
+        self._model_available = False
+        # training process
+        # after training
+        self._model_available = True
+
+    def score(self, X: np.array, y: np.array):
+        """[return score of (X, y) based on svm trained model]
+        
+        Arguments:
+            X {np.array} -- [feature array]
+            y {np.array} -- [target value]
+        
+        Return:
+            score {float} - [score of SVM model after evaluation of (X, y) pair]
+        """
+        if not self._model_available:
+            raise ValueError("SVM model isn't available")
+        raise NotImplementedError
+
+    def predict(self, X: np.array):
+        """[predict target value given X as input]
+        
+        Arguments:
+            X {np.array} -- [feature array]
+
+        Return:
+            y_pred {np.array} - [predicted target value]
+        """
+        if not self._model_available:
+            raise ValueError("SVM model isn't available")
+        raise NotImplementedError
+
+    ########################
+    # Available SVM kernels 
+    ########################
+    def kernel_linear(self, x1: tf.Tensor, x2: tf.Tensor):
+        """[linear kernel method for SVM]
+        
+        Arguments:
+            x1 {tf.Tensor} -- [x1 vector]
+            x2 {tf.Tensor} -- [x2 vector]
+        
+        Returns:
+            [tf.Tensor] -- [tf.matmul(x1.T, x2)]
+        """
+        assert tf.shape(x1) == tf.shape(x2)
+        return tf.matmul(tf.transpose(x1), x2)
