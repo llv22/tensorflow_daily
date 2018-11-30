@@ -382,6 +382,9 @@ class TFSVM():
         self._C = C
         self._epsilon = epsilon
         self._model_available = False
+        # initialize session and enter training session
+        self._sess = tf.Session()
+        self._sess.__enter__()
 
     def fit(self, X_train: np.array, y_train: np.array):
         """[training process for (X_train, y_train)], different from you seeing online. I'd like to use tensorflow for SMO update process, as it's actually analytical solution.
@@ -390,12 +393,80 @@ class TFSVM():
             X_train {np.array} -- [X input data]
             y_train {np.array} -- [y output data, only +1/-1 for classification]
         """
-        raise NotImplementedError
+        def svm_weights(X_len: int, X_dim: int, y_dim: int, scope="svm"):
+            """[setup svm variables weights]
+            
+            Arguments:
+                X_len {[int]} -- [total number of X instance]
+                X_dim {[int]} -- [dimension number of X]
+                y_dim {[int]} -- [dimension number of y]
+            
+            Keyword Arguments:
+                scope {str} -- [description] (default: {"svm"})
+            """
+            with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
+                init = tf.initializers.xavier_initializer()
+                W = tf.get_variable("W", shape=[X_dim, y_dim], initializer=init())
+                b = tf.get_variable("b", shape=[y_dim], initializer=init())
+                alphas = tf.random_uniform([X_len], tf.float32) * self._C
+            return W, b, alphas
+
+        def examineExample(i2: int):
+            """[take training sample X_train[i2] as \alpha_2 to check \alpha_1]
+            
+            Arguments:
+                i {int} -- [training sample index]
+            
+            Returns:
+                cnt {int} - [if i2 is improved by heursitic search pair of relevant i1]
+            """
+            cnt = 1
+            
+
         assert X_train.shape[0] == y_train.shape[0]
-        # start training
+        ## 1. start training
         self._model_available = False
-        # training process
-        # after training
+        ## 2. training process
+        X_len, self._X_dim, self._y_dim = X_train.shape[0], X_train.shape[1], y_train[1]
+        self._W, self._b, self._alphas = svm_weights(X_len, self._X_dim, self._y_dim)
+
+        ## SMO for SVM train
+        self._X = tf.placeholder(tf.float32, shape=[None, self._X_dim])
+        self._y = tf.placeholder(tf.float32, shape=[None, self._y_dim])
+        numChanged = 0; examineAll = True
+
+        def smo_loop(numChanged: tf.Tensor, examineAll: tf.Tensor):
+            """[loop processing for SMO]
+            
+            Arguments:
+                numChanged {tf.Tensor} -- [if alpha_1 or alpha_2 is changed during the iteration]
+                examineAll {tf.Tensor} -- [if all training sample is processed during the iteration]
+            
+            Returns:
+                [type] -- [description]
+            """
+            numChanged = tf.cond(examineAll, lambda: numChanged+1, lambda: numChanged+2)
+            # just check if loop smo is working or not
+            numChanged = tf.Print(numChanged, [numChanged], message="numChanged:")
+            examineAll = tf.cond(examineAll, lambda: False, lambda: tf.cond(tf.equal(numChanged, 0), lambda: True, lambda: examineAll))
+            return numChanged, examineAll
+        
+        op = tf.while_loop(lambda numChanged, examineAll: tf.logical_or(numChanged > 0, examineAll), smo_loop, (numChanged, examineAll))
+
+        while numChanged > 0 or examineAll:
+            numChanged = 0
+            if examineAll:
+                # loop i over all traning examples
+                raise NotImplementedError
+            else:
+                # loop i over examples where alpha is not 0 and not self._C
+                raise NotImplementedError
+            if examineAll:
+                examineAll = False
+            elif numChanged == 0:
+                examineAll = True
+
+        ## 3. after training
         self._model_available = True
 
     def score(self, X: np.array, y: np.array):
