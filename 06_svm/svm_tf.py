@@ -81,7 +81,8 @@
 # make $ \alpha_1 y^{(1)} + \alpha_2 y^{(2)} = \zeta $, We analyze ($\alpha_1, \alpha_2$) as the following 2 cases:
 #
 # **Case 1**: $ y^{(1)} \cdot y^{(2)} = -1 $, we have
-#     <img src="svm_bound.png" width="45%"/>
+#     <img src="http://qiniu.xdpie.com/2017-09-13-16-56-00.png" width="40%"/>
+#     <!--<img src="svm_bound.png" width="45%"/>-->
 #
 # $ L = \max(0, \alpha_2 - \alpha_1), H = \min(C, C + \alpha_2 - \alpha_1) $
 #
@@ -353,6 +354,9 @@ plt.ylabel('Sepal Length')
 # W^{new} = W + y_1 (\alpha_1^{new} - \alpha_1) x_1 + y_2 (\alpha_2^{new, clipped} - \alpha_2) x_2
 # $$
 
+
+# * **Basic implementation references**
+#     - [while_loop for migration of SVM to tensorflow](05_basic/while_loop_in_tf.ipynb)
 
 # +
 import tensorflow as tf
