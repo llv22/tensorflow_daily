@@ -47,6 +47,8 @@ class QFunction(Network):
         for hidden_units in self._hidden_layer_sizes:
             x = layers.Dense(hidden_units, activation='relu')(x)
         q_values = layers.Dense(1, activation=None)(x)
+        # convert (None, 1) -> (None) to avoid issue: ValueError: Shapes (?, 1) and (?,) are incompatible
+#         q_values = layers.Reshape((-1))(q_values)
 
         print("network construct, input_shape:", input_shape)
         self._init_graph_network(inputs=inputs, outputs=q_values)
@@ -66,6 +68,8 @@ class ValueFunction(Network):
         for hidden_units in self._hidden_layer_sizes:
             x = layers.Dense(hidden_units, activation='relu')(x)
         values = layers.Dense(1, activation=None)(x)
+        # convert (None, 1) -> (None) to avoid issue: ValueError: Shapes (?, 1) and (?,) are incompatible
+#         values = layers.Reshape((-1))(values)
 
         self._init_graph_network(inputs, values)
         super(ValueFunction, self).build(input_shape)
