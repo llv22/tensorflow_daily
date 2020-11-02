@@ -113,3 +113,5 @@ output/
 *.data*
 *.png
 checkpoint
+01_regression/models/
+01_regression/linear_v1_migrated_failed.ipynb
