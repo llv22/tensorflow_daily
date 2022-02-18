@@ -1,0 +1,66 @@
+--------------------------------------------------------------------------------
+Processing file 'hello_world_tf1.py'
+ outputting to 'hello_world_tf2_migrate.py'
+--------------------------------------------------------------------------------
+
+'hello_world_tf1.py' Line 15
+--------------------------------------------------------------------------------
+
+Renamed function 'tf.placeholder' to 'tf.compat.v1.placeholder'
+
+    Old: x = tf.placeholder('float')
+             ~~~~~~~~~~~~~~          
+    New: x = tf.compat.v1.placeholder('float')
+             ~~~~~~~~~~~~~~~~~~~~~~~~          
+
+'hello_world_tf1.py' Line 16
+--------------------------------------------------------------------------------
+
+Renamed function 'tf.placeholder' to 'tf.compat.v1.placeholder'
+
+    Old: y = tf.placeholder('float')
+             ~~~~~~~~~~~~~~          
+    New: y = tf.compat.v1.placeholder('float')
+             ~~~~~~~~~~~~~~~~~~~~~~~~          
+
+'hello_world_tf1.py' Line 21
+--------------------------------------------------------------------------------
+
+Added keyword 'input_tensor' to reordered function 'tf.reduce_sum'
+
+    Old: mse = tf.reduce_sum(tf.pow(y_hat - y, 2))/n
+                                                     
+    New: mse = tf.reduce_sum(input_tensor=tf.pow(y_hat - y, 2))/n
+                             ~~~~~~~~~~~~~                        
+
+'hello_world_tf1.py' Line 22
+--------------------------------------------------------------------------------
+
+Renamed function 'tf.train.GradientDescentOptimizer' to 'tf.compat.v1.train.GradientDescentOptimizer'
+
+    Old: optimizer = tf.train.GradientDescentOptimizer(LEARNING_RATE).minimize(mse)
+                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                              
+    New: optimizer = tf.compat.v1.train.GradientDescentOptimizer(LEARNING_RATE).minimize(mse)
+                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                              
+
+'hello_world_tf1.py' Line 24
+--------------------------------------------------------------------------------
+
+Renamed function 'tf.Session' to 'tf.compat.v1.Session'
+
+    Old: with tf.Session() as sess:
+              ~~~~~~~~~~            
+    New: with tf.compat.v1.Session() as sess:
+              ~~~~~~~~~~~~~~~~~~~~            
+
+'hello_world_tf1.py' Line 25
+--------------------------------------------------------------------------------
+
+Renamed function 'tf.global_variables_initializer' to 'tf.compat.v1.global_variables_initializer'
+
+    Old:     sess.run(tf.global_variables_initializer())
+                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    
+    New:     sess.run(tf.compat.v1.global_variables_initializer())
+                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    
+
+
